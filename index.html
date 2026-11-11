@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>手球比赛报名</title>
+<style>
+  html,body{height:100%;margin:0}
+  body{display:flex;align-items:center;justify-content:center;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+  .box{text-align:center;color:#555;padding:24px}
+  .spin{width:38px;height:38px;margin:0 auto 16px;border:4px solid #e3e6ec;border-top-color:#c8102e;border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  h1{font-size:17px;color:#c8102e;margin:0 0 8px;font-weight:700}
+  p{font-size:14px;margin:0;line-height:1.7}
+  a{color:#c8102e}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spin"></div>
+  <h1 id="t">正在进入报名页…</h1>
+  <p id="s">请稍候</p>
+</div>
+<script>
+/* ===== 固定入口跳转页 =====
+   这个页面的地址永久不变；它会把当前隧道地址转发出去。
+   只需改下面 TUNNEL 这一行（由脚本自动更新）。 */
+var TUNNEL = "https://44ef2eb.r37.cpolar.top";
+
+(function(){
+  var base = String(TUNNEL || "").replace(/\/+$/, "");
+  var hash = location.hash || "";
+  var search = location.search || "";
+  var target;
+
+  if(!base){
+    document.getElementById("t").textContent = "入口未配置";
+    document.getElementById("s").textContent = "请联系赛事管理员";
+    return;
+  }
+
+  if(hash){
+    /* 已带 #/home?event=xxx 这类路由，原样转发 */
+    target = base + "/" + hash;
+  } else if(/(^|[?&])event=/.test(search)){
+    /* 只有 ?event=xxx，补成应用要的 hash 路由 */
+    target = base + "/#/home" + search;
+  } else {
+    /* 什么都没有，进赛事列表页 */
+    target = base + "/";
+  }
+
+  document.getElementById("s").textContent = "如 3 秒内没有自动跳转，点这里";
+
+  var btn = document.createElement("p");
+  btn.innerHTML = '<a href="' + target.replace(/"/g, "&quot;") + '">手动进入报名页</a>';
+  document.querySelector(".box").appendChild(btn);
+
+  setTimeout(function(){
+    try { location.replace(target); } catch(e){ location.href = target; }
+  }, 60);
+})();
+</script>
+</body>
+</html>
