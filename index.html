@@ -24,41 +24,44 @@
 <script>
 /* ===== 固定入口跳转页 =====
    这个页面的地址永久不变；它会把当前隧道地址转发出去。
-   只需改下面 TUNNEL 这一行（由脚本自动更新）。 */
+   目标地址优先从同站点的 target.txt 实时读取（带时间戳参数，绕过 CDN 缓存），
+   读不到时用下面 TUNNEL 这一行兜底（由脚本自动更新）。 */
 var TUNNEL = "https://6c66b518.r37.cpolar.top";
 
-(function(){
-  var base = String(TUNNEL || "").replace(/\/+$/, "");
-  var hash = location.hash || "";
-  var search = location.search || "";
-  var target;
+function buildTarget(base, hash, search){
+  base = String(base || "").replace(/\/+$/, "");
+  if(!base) return "";
+  if(hash) return base + "/" + hash;
+  if(/(^|[?&])event=/.test(search)) return base + "/#/home" + search;
+  return base + "/";
+}
 
-  if(!base){
+function jump(base){
+  var target = buildTarget(base, location.hash || "", location.search || "");
+  if(!target){
     document.getElementById("t").textContent = "入口未配置";
     document.getElementById("s").textContent = "请联系赛事管理员";
     return;
   }
-
-  if(hash){
-    /* 已带 #/home?event=xxx 这类路由，原样转发 */
-    target = base + "/" + hash;
-  } else if(/(^|[?&])event=/.test(search)){
-    /* 只有 ?event=xxx，补成应用要的 hash 路由 */
-    target = base + "/#/home" + search;
-  } else {
-    /* 什么都没有，进赛事列表页 */
-    target = base + "/";
-  }
-
   document.getElementById("s").textContent = "如 3 秒内没有自动跳转，点这里";
-
   var btn = document.createElement("p");
   btn.innerHTML = '<a href="' + target.replace(/"/g, "&quot;") + '">手动进入报名页</a>';
   document.querySelector(".box").appendChild(btn);
-
   setTimeout(function(){
     try { location.replace(target); } catch(e){ location.href = target; }
-  }, 60);
+  }, 50);
+}
+
+(function(){
+  var fallback = String(TUNNEL || "").trim();
+  if(!window.fetch){ jump(fallback); return; }
+  fetch("target.txt?t=" + Date.now(), {cache: "no-store"})
+    .then(function(r){ if(!r.ok) throw 0; return r.text(); })
+    .then(function(txt){
+      var u = String(txt || "").trim().split(/\s+/)[0] || "";
+      jump(/^https?:\/\/[a-z0-9][a-z0-9.-]*/i.test(u) ? u : fallback);
+    })
+    .catch(function(){ jump(fallback); });
 })();
 </script>
 </body>
